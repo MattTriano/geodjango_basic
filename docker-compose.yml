@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: geodjango_db
+      POSTGRES_USER: geodjango_user
+      POSTGRES_PASSWORD: geodjango_pw
+    ports:
+      - "5432:5432"
+    volumes:
+      - geodjango_postgis_vol:/var/lib/postgresql/data/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U geodjango_user -d geodjango_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: ./geodjango
+    command: python manage.py runserver 0.0.0.0:3435
+    volumes:
+      - ./geodjango:/usr/src/app
+    ports:
+      - "3435:3435"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  geodjango_postgis_vol:
+
